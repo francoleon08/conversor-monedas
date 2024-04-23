@@ -9,7 +9,6 @@ import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,6 +50,7 @@ public class ViewConversor {
 
         amountToConvert = new JFormattedTextField(formatter);
         amountToConvert.setColumns(10);
+        amountToConvert.setValue(1);
         topPanel.add(amountToConvert);
 
         convertButton = new JButton("Convertir");
@@ -108,6 +108,11 @@ public class ViewConversor {
             @Override
             public void loadModelFinished() {
                 showConvertResult();
+            }
+
+            @Override
+            public void loadModelFailed(String msg) {
+                showError(msg);
             }
         });
     }

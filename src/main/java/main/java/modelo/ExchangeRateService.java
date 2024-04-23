@@ -1,7 +1,9 @@
 package main.java.modelo;
 
+import main.java.modelo.consumerAPI.CurrencyLoader;
 import main.java.modelo.exceptions.InvalidCurrencyExcpetion;
 
+import java.io.IOException;
 import java.util.*;
 
 public class ExchangeRateService {
@@ -10,11 +12,13 @@ public class ExchangeRateService {
     private Map<String, Double> exchangeRates;
     private List<LoadModelListener> listeners;
     private double lastResult;
+    private CurrencyLoader currencyLoader;
 
-    public ExchangeRateService() {
-        exchangeRates = CurrencyLoader.getExchangeRates(BASE_CURRENCY);
+    public ExchangeRateService(CurrencyLoader currencyLoader) {
+        this.currencyLoader = currencyLoader;
         listeners = new ArrayList<>();
         lastResult = 0;
+        updateRates(BASE_CURRENCY);
     }
 
     public void convertCurrency(String source, String target, int amount) throws InvalidCurrencyExcpetion {
@@ -39,14 +43,28 @@ public class ExchangeRateService {
         return exchangeRates.keySet();
     }
 
+    private void updateRates(String currency) {
+        try {
+            exchangeRates = currencyLoader.getExchangeRates(currency);
+        } catch (IOException | InterruptedException e) {
+            notifyLoadFailedListener(e.getMessage());
+        }
+    }
+
     private void getExchangeRates(String currency) {
         if(!Objects.equals(exchangeRates.get(currency), DEFAULT_RATE))
-            exchangeRates = CurrencyLoader.getExchangeRates(currency);
+            updateRates(currency);
     }
 
     private void notifyLoadFinishedListener() {
         for (LoadModelListener listener : listeners) {
             listener.loadModelFinished();
+        }
+    }
+
+    private void notifyLoadFailedListener(String msg) {
+        for (LoadModelListener listener : listeners) {
+            listener.loadModelFailed(msg);
         }
     }
 }
