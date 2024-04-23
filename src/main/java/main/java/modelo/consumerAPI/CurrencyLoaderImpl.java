@@ -12,6 +12,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 
+/**
+ * Consume la API de exchangerate-api.com para obtener las tasas de cambio de una divisa
+ */
+
 public class CurrencyLoaderImpl implements CurrencyLoader {
 
     private String API_KEY;
