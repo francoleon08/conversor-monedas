@@ -1,28 +1,34 @@
 package main.java.vista;
 
-import main.java.controlador.ControladorDivisas;
-import main.java.modelo.LoadModeloListener;
-import main.java.modelo.ServicioTasaCambio;
+import main.java.controlador.CurrencyController;
+import main.java.modelo.LoadModelListener;
+import main.java.modelo.ExchangeRateService;
 
 import javax.swing.*;
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ViewConversor {
 
     private JFrame frame;
     private JPanel content;
-    private JComboBox<String> in;
-    private JComboBox<String> out;
+    private JComboBox<String> inRates;
+    private JComboBox<String> outRates;
     private JButton convertButton;
-    private JTextField termToConvert;
+    private JFormattedTextField amountToConvert;
     private JTextArea resultConvert;
 
-    private ControladorDivisas controladorDivisas;
-    private ServicioTasaCambio servicioTasaCambio;
+    private CurrencyController currencyController;
+    private ExchangeRateService exchangeRateService;
 
-    public ViewConversor(ControladorDivisas controladorDivisas, ServicioTasaCambio servicioTasaCambio) {
-        this.controladorDivisas = controladorDivisas;
-        this.servicioTasaCambio = servicioTasaCambio;
+    public ViewConversor(CurrencyController currencyController, ExchangeRateService exchangeRateService) {
+        this.currencyController = currencyController;
+        this.exchangeRateService = exchangeRateService;
         initConfig();
         initListeners();
     }
@@ -30,6 +36,7 @@ public class ViewConversor {
     private void initConfig() {
         frame = new JFrame("Conversor");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
 
         content = new JPanel();
         content.setLayout(new BorderLayout());
@@ -37,8 +44,14 @@ public class ViewConversor {
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new FlowLayout());
 
-        termToConvert = new JTextField(10);
-        topPanel.add(termToConvert);
+        NumberFormat format = NumberFormat.getInstance();
+        NumberFormatter formatter = new NumberFormatter(format);
+        formatter.setValueClass(Integer.class);
+        formatter.setAllowsInvalid(false);
+
+        amountToConvert = new JFormattedTextField(formatter);
+        amountToConvert.setColumns(10);
+        topPanel.add(amountToConvert);
 
         convertButton = new JButton("Convertir");
         topPanel.add(convertButton);
@@ -46,17 +59,20 @@ public class ViewConversor {
         JPanel middlePanel = new JPanel();
         middlePanel.setLayout(new FlowLayout());
 
-        in = new JComboBox<>(servicioTasaCambio.getTasas().toArray(new String[0]));
-        out = new JComboBox<>(servicioTasaCambio.getTasas().toArray(new String[0]));
+        inRates = new JComboBox<>(exchangeRateService.getRates().toArray(new String[0]));
+        List<String> sourceRates = new ArrayList<>(exchangeRateService.getRates().stream().toList());
+        Collections.shuffle(sourceRates);
+        outRates = new JComboBox<>(sourceRates.toArray(new String[0]));
 
-        middlePanel.add(in);
-        middlePanel.add(out);
+        middlePanel.add(inRates);
+        middlePanel.add(outRates);
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new FlowLayout());
 
-        resultConvert = new JTextArea(5, 20);
+        resultConvert = new JTextArea(1, 20);
         resultConvert.setEditable(false);
+        resultConvert.setOpaque(true);
         bottomPanel.add(resultConvert);
 
         content.add(topPanel, BorderLayout.NORTH);
@@ -70,29 +86,38 @@ public class ViewConversor {
 
     public void startWaitingStatus() {
         convertButton.setEnabled(true);
+        inRates.setEnabled(true);
+        outRates.setEnabled(true);
     }
 
     public void stopWaitingStatus() {
         convertButton.setEnabled(false);
+        inRates.setEnabled(false);
+        outRates.setEnabled(false);
     }
 
     public void initListeners() {
         convertButton.addActionListener(e -> {
-            String origen = (String) in.getSelectedItem();
-            String destino = (String) out.getSelectedItem();
-            int cantidad = Integer.parseInt(termToConvert.getText());
-            controladorDivisas.convertirDivisa(origen, destino, cantidad);
+            String source = (String) inRates.getSelectedItem();
+            String target = (String) outRates.getSelectedItem();
+            int amount = (int) amountToConvert.getValue();
+            currencyController.convertCurrency(source, target, amount);
         });
 
-        servicioTasaCambio.addListener( new LoadModeloListener() {
+        exchangeRateService.addListener(new LoadModelListener() {
             @Override
-            public void loadModeloFinished() {
+            public void loadModelFinished() {
                 showConvertResult();
             }
         });
     }
 
     public void showConvertResult() {
-        resultConvert.setText(String.valueOf(servicioTasaCambio.getLastResult()));
+        double conversion = Math.round(exchangeRateService.getLastResult() * 100.0) / 100.0;
+        resultConvert.setText(String.valueOf(conversion));
+    }
+
+    public void showError(String message) {
+        JOptionPane.showMessageDialog(frame, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

@@ -1,11 +1,11 @@
 package main.java;
 
-import main.java.controlador.ControladorDivisas;
-import main.java.modelo.ServicioTasaCambio;
+import main.java.controlador.CurrencyController;
+import main.java.modelo.ExchangeRateService;
 
 public class Main {
     public static void main(String[] args) {
-        ServicioTasaCambio servicioTasaCambio = new ServicioTasaCambio();
-        new ControladorDivisas(servicioTasaCambio);
+        ExchangeRateService exchangeRateService = new ExchangeRateService();
+        new CurrencyController(exchangeRateService);
     }
 }

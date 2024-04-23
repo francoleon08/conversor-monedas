@@ -11,16 +11,16 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
 
-public class LoadDivisas {
+public class CurrencyLoader {
 
     private static final String URL = "https://v6.exchangerate-api.com/v6/9c8bced6fffad53823151f67/latest/";
 
-    public static Map<String, Double> getTasasCambio(String divisa) {
-        String response = realizarConsultaHTTP(divisa);
-        return parsearJsonAMapDeDivisas(response);
+    public static Map<String, Double> getExchangeRates(String divisa) {
+        String response = makeHTTPRequest(divisa);
+        return parseJsonToCurrencyMap(response);
     }
 
-    private static String realizarConsultaHTTP(String divisa) {
+    private static String makeHTTPRequest(String divisa) {
         try {
             HttpClient httpClient = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -35,7 +35,7 @@ public class LoadDivisas {
         }
     }
 
-    private static Map<String, Double> parsearJsonAMapDeDivisas(String json) {
+    private static Map<String, Double> parseJsonToCurrencyMap(String json) {
         Gson gson = new Gson();
         JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
         JsonObject conversionRates = jsonObject.getAsJsonObject("conversion_rates");
